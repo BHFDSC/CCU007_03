@@ -155,6 +155,9 @@ df$CHDsubtype=as.factor(df$CHDsubtype)
 
 model=rq(patAge_model1 ~ factor(pat_era) + factor(ethnicity) +relevel(patimd_2019_quintiles, ref = 5)+ factor(SexMale)+ relevel(CHDsubtype, ref =ref_CHDsubtype)+factor(patCongDowns) + factor(Premat) , data = df, tau = 0.5,method="fn")
 summary(model ,se = "boot",R=5000) # modelling results, using bootstrap to compute the confidence interval 
+#The result will show the estimated coefficient, along with the lower and upper percentiles (95% confidence interval).
+
+
 
 #subgroup analysis:  test the interaction between the era and social factors 
 model1=rq(patAge_model1 ~ factor(pat_era):factor(ethnicity)+factor(pat_era) + factor(ethnicity) +relevel(patimd_2019_quintiles, ref = 5)+ factor(SexMale)+ relevel(CHDsubtype, ref =ref_CHDsubtype)+factor(patCongDowns) + factor(Premat) , data = df, tau = 0.5,method="fn")
@@ -184,6 +187,7 @@ model=rq(patAge_model2 ~
         factor(pat_era) + factor(ethnicity) +relevel(patimd_2019_quintiles, ref = 5)+ factor(SexMale)+ relevel(CHDsubtype, ref =ref_CHDsubtype)+factor(patCongDowns) + factor(Premat) , 
          data = df, tau = 0.5,method="fn")
 summary(model ,se = "boot",R=5000) # modelling results, using bootstrap to compute the confidence interval 
+#The result will show the estimated coefficient, along with the lower and upper percentiles (95% confidence interval).
 
 #subgroup analysis:  test the interaction between the era and social fatcors 
 model1=rq(patAge_model2 ~ factor(pat_era):factor(ethnicity)+

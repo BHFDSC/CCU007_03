@@ -1,0 +1,384 @@
+*********************************************************************************
+*********************data linkage, process the linked data to derive patients characteristics, create care spells, and compute the outcome related to hospital resource untilization during the 1st year of life
+*********************************************************************************
+
+*********************Link the NCHDA dataset with HES (inpatient APC/emergency care AE/ outpatient OP)
+
+use "$NCHDA_data", clear
+// set patentry (entry of records in NCHDA)
+capture drop patentry_nchda
+sort patid procedure_date discharge_date recordID, stable
+by patid (procedure_date discharge_date recordID): gen patentry_nchda = _n
+
+
+append using "$APC_forlinkage"
+append using "$OP_forlinkage"
+append using "$AE_forlinkage"
+
+sort patid admin_date discharge_date
+
+save "$LinkedData", replace
+
+********************* merge patients characteristics using cohort data
+capture drop _m
+capture drop sex
+capture drop MYDOB*
+capture drop ethnicity
+capture drop death_date // ONS death registeration data
+
+merge m:1 patid using "$chort_data", keepusing(sex MYDOB ethnicity  death_date)  
+
+
+* format the date
+capture drop aux*
+g auxmax=max( admin_date, discharge_date) 
+g auxmin=min( admin_date, discharge_date) 
+
+format auxmax %td
+format auxmin %td
+
+capture drop maxdatePat
+capture drop mindatePat
+qui egen maxdatePat = max( auxmax ), by( patid)
+qui egen mindatePat = min( auxmin ), by( patid )
+format maxdatePat %td
+format mindatePat %td
+
+
+*************** process the first admin_date and birth_date ***************
+count if year(mindatePat)==year(MYDOB) & month(mindatePat)==month(MYDOB) & patentry_nchda==1 // 9,016 patients had first procedure the same time as their date of birth 
+
+capture drop DOBset
+g DOBset=15 // in the middle of month
+replace DOBset=1 if year(mindatePat)==year(MYDOB) & month(mindatePat)==month(MYDOB) & day(mindatePat)<15
+
+capture drop str*
+g  stryy=year(MYDOB)
+g  strmm=month(MYDOB)
+g  strdd=DOBset
+
+capture drop MYDOB_rev
+gen MYDOB_rev = mdy(strmm, strdd, stryy)
+format MYDOB_rev %td
+
+*************** create spells ***************
+* All clinical data were organised into "care spells" that may include procedures, inpatient stays, outpatient visits, or accident and emergency (A&E) visits in any combination to manage overlaps in time frames
+
+global MARGIN_SPELL = 0 // we have exact date, so no need of extra margin 
+
+capture drop numSpell
+g numSpell=.
+sort patid admin_date epiorder discharge_date, stable
+by patid (admin_date epiorder discharge_date): replace numSpell = _n //first, the spell number is just the event number
+by patid (admin_date epiorder discharge_date): replace numSpell = numSpell[_n-1] if ///
+	( admin_date <= (discharge_date[_n-1]+$MARGIN_SPELL ) &  ~missing(admin_date,discharge_date[_n-1]) ) | /// 
+    ( admin_date <= (admin_date[_n-1]+$MARGIN_SPELL ) & ~missing(admin_date,admin_date[_n-1]) ) | /// 
+	( discharge_date <= (discharge_date[_n-1]+$MARGIN_SPELL ) &  ~missing(discharge_date,discharge_date[_n-1]) ) 
+capture drop aux*
+g aux=max( admin_date, discharge_date) 
+format aux %td
+
+	forvalues i = 1/250 {
+		capture drop maxdateSpell
+		capture drop mindateSpell
+		qui egen mindateSpell = min( admin_date ), by( patid numSpell )
+		qui egen maxdateSpell = max( aux ), by( patid numSpell )
+		format mindateSpell %td
+		format maxdateSpell %td
+
+		by patid (admin_date epiorder discharge_date): replace numSpell = numSpell[_n-1] if ///
+			( ( admin_date >= mindateSpell[_n-1]-$MARGIN_SPELL ) & ( admin_date <= maxdateSpell[_n-1]+$MARGIN_SPELL ) & ~missing(admin_date,maxdateSpell[_n-1],mindateSpell[_n-1]) ) 
+	}
+
+
+capture drop order_event_number
+g order_event_number=.
+by patid numSpell (admin_date epiorder discharge_date), sort: replace order_event_number = _n 
+
+rename numSpell oldnumSpell
+capture drop numSpell
+by patid oldnumSpell (admin_date epiorder discharge_date): gen numSpell = 1 if _n==1
+by patid (oldnumSpell admin_date epiorder discharge_date): replace numSpell = sum(numSpell)
+by patid (oldnumSpell admin_date epiorder discharge_date): replace numSpell =. if missing(oldnumSpell)
+
+by patid numSpell (admin_date epiorder discharge_date), sort: replace order_event_number = _n 
+drop oldnumSpell
+
+tab numSpell, sort missing
+tab order_event_number, sort missing
+
+capture drop patentry
+g patentry=.
+by patid (numSpell order_event_number), sort: replace patentry = _n
+
+capture drop aux*
+g aux=maxdateSpell-mindateSpell
+
+
+capture drop totalSpells
+capture drop totalEventsSpell
+egen totalSpells = max(numSpell), by(patid)
+egen totalEventsSpell = max(order_event_number), by(patid numSpell)
+
+tab totalSpells if patentry==1, missing
+
+
+sort patid patentry
+
+
+capture drop SpellhasNCHDA
+capture drop SpellhasAE
+capture drop SpellhasAPC
+capture drop SpellhasOP
+egen SpellhasNCHDA   = max(  dataSOURCE=="01NCHDA"), by( patid numSpell) 
+egen SpellhasAPC = max( dataSOURCE=="02APC" ), by( patid numSpell)
+egen SpellhasOP = max( dataSOURCE=="03OP" ), by( patid numSpell)
+egen SpellhasAE = max(  dataSOURCE=="04AE" ), by( patid numSpell)
+
+
+
+capture drop CatSpell
+gen CatSpell=.
+replace CatSpell=1 if SpellhasNCHDA==1 |  SpellhasAPC==1 
+replace CatSpell=2 if SpellhasAE==1 & !(SpellhasNCHDA==1 |  SpellhasAPC==1) & CatSpell==.
+
+replace CatSpell=3 if SpellhasOP==1 & SpellhasNCHDA==0 & SpellhasAE==0 & SpellhasAPC==0   & CatSpell==.
+
+
+capture label drop CatSpellLab
+capture noisily{
+label define CatSpellLab ///
+1 "1: In-patient spell" ///
+2 "2: AE spell not admitted" ///
+3 "3: Out-patient spell" 
+}
+label values CatSpell CatSpellLab
+
+
+********************compute length of care spells
+*** compute event age and discharge age (uncertainty up to 15 days)
+capture drop event_age
+capture drop discharge_age
+
+gen event_age = (admin_date-MYDOB_rev)/365.25
+gen discharge_age = (discharge_date-MYDOB_rev)/365.25
+
+capture drop maxageatdis // maximum age at discharge
+by patid numSpell, sort: egen maxageatdis=max(discharge_age) // per spell
+
+
+*** compute event age and discharge age (uncertainty up to 15 days)
+
+capture drop rawmylength_spell_days
+gen rawmylength_spell_days=maxdateSpell-mindateSpell
+
+
+capture drop mylength_spell_days
+g mylength_spell_days=rawmylength_spell_days
+summ rawmylength_spell_days if order_event_number==1, det
+
+tab CatSpell if mylength_spell_days==0 & order_event_number==1
+replace mylength_spell_days=1 if mylength_spell_days<1 // if less than 1 day, replace it as 1 day (we can only precise to days as no exact timing provided)
+
+
+// max age in spell
+capture drop maxageSpell
+capture drop minageSpell
+
+capture drop aux
+gen aux=max(event_age,discharge_age) 
+by patid numSpell, sort: egen maxageSpell=max(aux) 
+capture drop aux
+gen aux=min(event_age,discharge_age) 
+by patid numSpell, sort: egen minageSpell=min(aux) 
+
+// max IP age in spell
+capture drop maxIPageSpell
+capture drop minIPageSpell
+
+capture drop aux
+gen aux=max(event_age,discharge_age) if inlist(dataSOURCE,"01NCHDA","02APC")
+by patid numSpell, sort: egen maxIPageSpell=max(aux) 
+capture drop aux
+gen aux=min(event_age,discharge_age) if inlist(dataSOURCE,"01NCHDA","02APC")
+by patid numSpell, sort: egen minIPageSpell=min(aux) 
+
+
+
+// compute the outcome related to hospital resource untilization during the 1st year of life
+
+// all hospital days 
+capture drop AllDaysbyYear1
+capture drop aux
+gen aux=mylength_spell_days if  maxageSpell<=1 & order_event_number==1 
+replace aux=365.25*(1-minageSpell) if minageSpell<=1 & maxageSpell>1  & order_event_number==1 
+by patid (patentry), sort: gen AllDaysbyYear1= sum(aux)
+by patid (AllDaysbyYear1), sort: replace AllDaysbyYear1 = AllDaysbyYear1[_N]
+replace AllDaysbyYear1=round(AllDaysbyYear1)
+
+
+// in-patient only days
+capture drop IPDaysbyYear1
+capture drop aux
+gen aux=mylength_spell_days if  maxageSpell<=1 & order_event_number==1 &  CatSpell==1
+replace aux=365.25*(1-minageSpell) if minageSpell<=1 & maxageSpell>1  & order_event_number==1 &  CatSpell==1
+
+by patid (patentry), sort: gen IPDaysbyYear1= sum(aux)
+by patid (IPDaysbyYear1), sort: replace IPDaysbyYear1 = IPDaysbyYear1[_N]
+replace IPDaysbyYear1=round(IPDaysbyYear1)
+summ IPDaysbyYear1 if  patentry==1, det
+// out-patient only days
+
+capture drop OPDaysbyYear1
+capture drop aux
+gen aux=mylength_spell_days if  maxageSpell<=1 & order_event_number==1 &  CatSpell==3
+replace aux=365.25*(1-minageSpell) if minageSpell<=1 & maxageSpell>1  & order_event_number==1 &  CatSpell==3
+
+by patid (patentry), sort: gen OPDaysbyYear1= sum(aux)
+by patid (OPDaysbyYear1), sort: replace OPDaysbyYear1 = OPDaysbyYear1[_N]
+replace OPDaysbyYear1=round(OPDaysbyYear1)
+summ OPDaysbyYear1 if  patentry==1, det
+
+
+*************** derive deprivation using IMD quintiles 2019 ***************
+* IMD only avaiable in HES data
+tab imd_2019_quintiles if inlist(dataSOURCE,"02APC"), missing
+tab imd_2019_quintiles if inlist(dataSOURCE,"03OP"), missing
+tab imd_2019_quintiles if inlist(dataSOURCE,"04AE"), missing 
+
+capture drop aux*
+g aux=0
+replace aux=1 if !missing(imd_2019_quintiles)
+
+
+capture drop pathasIMD
+by patid, sort: egen pathasIMD=max(aux)
+
+
+capture drop FristCHDspell
+by patid numSpell, sort: egen FristCHDspell=max(patentry_nchda==1)
+
+capture drop IMD_baseline
+g IMD_baseline=""
+
+// replace with first non-missing if FristCHDspell
+capture drop aux
+gen  aux = missing(imd_2019_quintiles) 
+by patid numSpell (aux order_event_spell), sort: replace IMD_baseline = imd_2019_quintiles[1]  if FristCHDspell==1 
+
+
+capture drop aux*
+g aux=0
+replace aux=1 if !missing(IMD_baseline)
+capture drop pathasIMDfirst
+by patid, sort: egen pathasIMDfirst=max(aux)
+
+
+// otherwise, replace first non-missing for all records
+capture drop aux
+gen  aux = missing(imd_2019_quintiles) 
+by patid  (aux patentry), sort: replace IMD_baseline = imd_2019_quintiles[1]  if pathasIMDfirst==0
+
+capture drop patimd_2019_quintiles
+capture drop aux
+gen  aux = missing(IMD_baseline) 
+by patid  (aux patentry), sort: g patimd_2019_quintiles = IMD_baseline[1]  
+
+destring patimd_2019_quintiles, replace
+replace patimd_2019_quintiles=6 if patimd_2019_quintiles==.
+
+capture label drop IMDLabel
+capture noisily {
+label define IMDLabel ///
+ 1 "1: Most deprived" ///
+ 2 "2: Second most deprived" ///
+ 3 "3: Mid-deprived" ///
+ 4 "4: Second least deprived" ///
+ 5 "5: Least deprived" ///
+ 6 "6: Unknown"
+}
+label values patimd_2019_quintiles IMDLabel
+label var patimd_2019_quintiles "Patient level Index of Multiple Deprivations (IMD) 2019"
+
+
+*************** derive vital status and age at vital status ***************
+****************************************************************************************************************
+
+capture drop aux
+g aux=0
+replace aux=1 if !missing(death_date)
+replace aux=1 if strmatch(DISCHARGE_STATUS, "*Died*") 
+
+capture drop lastknownstatus
+by patid, sort: egen lastknownstatus=max(aux)
+
+capture label drop lastknownstatusLabel
+capture noisily {
+label define lastknownstatusLabel ///
+ 0 "0: Alive" ///
+ 1 "1: Died" 
+}
+label values lastknownstatus lastknownstatusLabel
+
+capture drop ageatlastknownstatus 
+g ageatlastknownstatus=(death_date-MYDOB_rev)/365.25 if lastknownstatus==1
+
+gen ONSdate = mdy(7, 1, 2023)
+format ONSdate %td
+
+replace ageatlastknownstatus=(ONSdate-MYDOB_rev)/365.25 if lastknownstatus==0
+
+
+***** marker of patients had APC/OP/AE
+capture drop pathasAPC
+capture drop pathasOP
+capture drop pathasAE
+egen pathasAPC   = max(  dataSOURCE=="02APC"), by( patid) 
+egen pathasOP   = max(  dataSOURCE=="03OP"), by( patid) 
+egen pathasAE   = max(  dataSOURCE=="04AE"), by( patid) 
+
+tab pathasAPC if patentry==1, missing
+tab pathasOP if patentry==1, missing
+tab pathasAE if patentry==1, missing
+
+
+* indentify patients in Wales
+capture drop Wales
+g Wales=0
+replace Wales=1 if  strmatch(lsoa11, "*W0*")  
+capture drop patWales
+egen patWales   = max( Wales), by( patid) 
+tab dataSOURCE if 	patWales==1
+
+* indentify patients in Scotland and northern Ireland address 
+
+capture drop SN
+
+g SN=0
+replace SN=1 if  strmatch(lsoa11, "*N99*")  | strmatch(lsoa11, "*S0*") // 
+capture drop patSN
+egen patSN   = max( SN), by( patid) // we remove patients if had at least one record of Scotland/northern Ireland address
+
+*** remove patients who had no HES inpatient records 
+
+capture drop pat_excluded*
+g pat_excluded=0
+g pat_excludedinf=""
+
+
+replace pat_excluded=1 if pathasAPC==0
+replace pat_excludedinf="No APC records" if pathasAPC==0
+
+capture drop SN
+g SN=0
+replace SN=1 if  strmatch(lsoa11, "*N99*")  | strmatch(lsoa11, "*S0*") // Scotland and northern Ireland address
+capture drop patSN
+egen patSN   = max( SN), by( patid) // we remove patients if had at least one record of Scotland/northern Ireland address
+
+replace pat_excluded=1 if patSN==1
+replace pat_excludedinf=pat_excludedinf+"Scotland/Northern Ireland patients" if patSN==1
+
+
+save "$LinkedData", replace
+
+

@@ -16,7 +16,7 @@ textposition=0.4
 
 ##################### pathway treatment age mode 1
 df=stage1model # load palliative stage 1 model results, see how to compute it in pathway age analysis R file. 
-# df is of size  length(birth_era) 
+# df is of size  3 (transition era, restriction era and post restriction era) * 4 (coefficient  estimate, 2.5% and 97.5% percentiles, and 95% CI) 
 
 plot(NULL,xlim=c(-10,10),ylim=c(0.8,4),pch=19, cex=0.5,col=, yaxt='n',
      xaxt='n', xlab='', ylab='',new=T, bty="n",main="")
@@ -25,12 +25,12 @@ lines(rep(0,2),c(0,3.2),lwd=2,lty=2,col=gray(0.4))
 y_pos=3:1
 
 for(i in 1:3){
-  lines(df[i,3:4],rep(y_pos[i],2),lwd=2,col=gray(0.4))
-  points(round(df[i]),round(y_pos[i]),pch=19,col=gray(0.1))
+  lines(df[i,2:3],rep(y_pos[i],2),lwd=2,col=gray(0.4)) #confidence interval
+  points(round(df[i,1]),round(y_pos[i]),pch=19,col=gray(0.1)) #coefficient estimate
   legend(-11,y_pos[i]+textposition,birth_era[i],bty="n",cex=cex_text)
-  legend(2.5,y_pos[i]+textposition,df$coenew[i],bty="n",cex=cex_text)
-  
+  legend(2.5,y_pos[i]+textposition,df[i,4],bty="n",cex=cex_text)
 }
+
 text(7.3,3.5,"Adjusted age difference\n with 95% CI (days)",cex=1.05*cex_text)
 
 text(0,4,"(a) Age at palliative stage 1",cex=1,font=2)
@@ -40,6 +40,7 @@ par(fig=c(0.5,1,0.5,1), new=T)
 
 ##################### pathway treatment age mode 2
 df=repairmodel # load palliative stage 2 and reparative procedure model results, see how to compute it in pathway age analysis R file. 
+# df is of size  3 (transition era, restriction era and post restriction era) * 4 (coefficient  estimate, 2.5% and 97.5% percentiles, and 95% CI) 
 
 plot(NULL,xlim=c(-10,10),ylim=c(0.8,4),pch=19, cex=0.5,col=, yaxt='n',
      xaxt='n', xlab='', ylab='',new=T, bty="n",main="")
@@ -48,10 +49,10 @@ lines(rep(0,2),c(0,3.2),lwd=2,lty=2,col=gray(0.4))
 y_pos=3:1
 
 for(i in 1:3){
-  lines(df[i,3:4],rep(y_pos[i],2),lwd=2,col=gray(0.4))
-  points(round(df[i]),round(y_pos[i]),pch=19,col=gray(0.1))
+  lines(df[i,2:3],rep(y_pos[i],2),lwd=2,col=gray(0.4))
+  points(round(df[i,1]),round(y_pos[i]),pch=19,col=gray(0.1))
   legend(-11,y_pos[i]+textposition,birth_era[i],bty="n",cex=cex_text)
-  legend(2.5,y_pos[i]+3*textposition/4,df$coenew[i],bty="n",cex=cex_text)
+  legend(2.5,y_pos[i]+3*textposition/4,df[i,4],bty="n",cex=cex_text)
   
 }
 text(7.3,3.5,"Adjusted age difference\n with 95% CI (days)",cex=1.05*cex_text)
@@ -61,6 +62,7 @@ mtext("Age difference (days)", line=1.3,side=1, cex=cex_lab)
 
 ##################### days spent at home 
 df=nonIPdaysathomemode # load nonIPdaysathome modelling results, see how to compute it in hospital resource unltization R file. 
+# df is of size  3 (transition era, restriction era and post restriction era) * 4 (coefficient  estimate, 2.5% and 97.5% percentiles, and 95% CI) 
 
 par(fig=c(0.5,1,0,0.5), new=T)
 
@@ -71,10 +73,10 @@ lines(rep(0,2),c(0,3.2),lwd=2,lty=2,col=gray(0.4))
 y_pos=3:1
 
 for(i in 1:3){
-  lines(df[i,3:4],rep(y_pos[i],2),lwd=2,col=gray(0.4))
-  points(round(df[i]),round(y_pos[i]),pch=19,col=gray(0.1))
+  lines(df[i,2:3],rep(y_pos[i],2),lwd=2,col=gray(0.4))
+  points(round(df[i,1]),round(y_pos[i]),pch=19,col=gray(0.1))
   legend(-11,y_pos[i]+textposition,birth_era[i],bty="n",cex=cex_text)
-  legend(2.5,y_pos[i]+0.75*textposition,df$coenew[i],bty="n",cex=cex_text)
+  legend(2.5,y_pos[i]+0.75*textposition,df[i,4],bty="n",cex=cex_text)
   
 }
 text(7.3,3.5,"Adjusted difference\n with 95% CI (days)",cex=1.05*cex_text)
@@ -83,6 +85,8 @@ mtext("Difference in days at home", line=1.3,side=1, cex=cex_lab)
 
 #####################infant mortality
 df=deathmodel # load infant mortality model results, see how to compute it in infant mortality analysis R file. 
+# df is of size  3 (transition era, restriction era and post restriction era) * 4 (coefficient  estimate, 2.5% and 97.5% percentiles, and 95% CI) 
+
 par(fig=c(0,0.5,0,0.5), new=T)
 
 plot(NULL,xlim=c(0,3),ylim=c(0.8,4),pch=19, cex=0.5,col=, yaxt='n',
@@ -92,10 +96,10 @@ lines(rep(1,2),c(0,3.2),lwd=2,lty=2,col=gray(0.4))
 y_pos=3:1
 
 for(i in 1:3){
-  lines(df[i,3:4],rep(y_pos[i],2),lwd=2,col=gray(0.4))
-  points((df[i]),(y_pos[i]),pch=19,col=gray(0.1))
+  lines(df[i,2:3],rep(y_pos[i],2),lwd=2,col=gray(0.4))
+  points((df[i,1]),(y_pos[i]),pch=19,col=gray(0.1))
   legend(-0.25,y_pos[i]+textposition,birth_era[i],bty="n",cex=cex_text)
-  legend(1.5,y_pos[i]+textposition,df$coenew[i],bty="n",cex=cex_text)
+  legend(1.5,y_pos[i]+textposition,df[i,4],bty="n",cex=cex_text)
   
 }
 text(2.2,3.5,"Adjusted OR with 95% CI",cex=1.05*cex_text)

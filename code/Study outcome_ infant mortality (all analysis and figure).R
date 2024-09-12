@@ -90,8 +90,8 @@ length(which(df$death1==1)) # 218
 
 model <- glm( death1 ~factor(pat_era) +  factor(White) +factor(Deprived)+factor(SexMale)+ relevel(CHDtype, ref = "TOF") +factor(patCongDowns) + factor(Premat), data = df, family = binomial(link = "logit"))
 summary(model ,se = "boot",R=5000) # modelling results, using bootstrap to compute the confidence interval 
+# The result will show the estimated coefficient, along with the lower and upper percentiles (95% confidence interval)
 # of note, one need to use exp() to compute the odds ratio
-
 
 
 #subgroup analysis:  test the interaction between the era and social factors 

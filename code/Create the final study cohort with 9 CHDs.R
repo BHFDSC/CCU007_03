@@ -52,22 +52,28 @@ for (i in 1:9){
   mydata_all<-rbind(mydata_all,Extract_mydata(mydata,CHDtype))
 }
 
+table(mydata_all$CHDtype)
+table(mydata_all$CHDsubtype)
 
 ############ main exposure
 #pandemic era: 1 (baseline) 2(transition) 3(restriction) 4(post restriction)
-mydata_all$pat_era 
+table(mydata_all$birth_era)
 
 ############ social factors
 #gender
-mydata_all$SexMale
+table(mydata_all$SexMale)
 
 #ethnicity 1 (White) 2(Black) 3 (Asian) 4(mixed/others) 5 (missing)
+table(mydata_all$ethnicity)
+#define a broader group
 mydata_all$White=0 
 mydata_all$White[which(mydata_all$ethnicity %in% c(1))]=1 #white
 mydata_all$White[which(mydata_all$ethnicity %in% c(5))]=2 #missing
 
 #deprivation:
 #patimd_2019_quintiles (IMD) 1(most deprived)-5(least deprived); 6 (missing)
+table(mydata_all$patimd_2019_quintiles)
+#define a broader group
 mydata_all$Deprived=0 #least deprived areas 
 mydata_all$Deprived[which(mydata_all$patimd_2019_quintiles %in% c(1,2))]=1 # most deprived areas (IMD 1-2) 
 mydata_all$Deprived[which(mydata_all$patimd_2019_quintiles %in% c(6))]=2 #missing
@@ -78,4 +84,5 @@ mydata_all$Deprived[which(mydata_all$patimd_2019_quintiles %in% c(6))]=2 #missin
 mydata_all$patCongDowns=0 
 mydata_all$patCongDowns[which(mydata_all$patDowns==1 | mydata_all$patcongcomorb==1)]=1 
 
+table(mydata_all$patCongDowns)
 

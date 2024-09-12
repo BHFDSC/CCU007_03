@@ -3,9 +3,17 @@ This study used  linked electronic health care datasets from England and Wales t
 For inquiries: qi_huang@ucl.ac.uk
 
 Step1
-Process the primary dataset, i.e., National Congenital Heart Disease Audit (NCHDA)
+Process the primary dataset, i.e., National Congenital Heart Disease Audit (NCHDA). We used specific procedure algorithm  and activity algorithm to allocate the procedure type. These two algorithm were developed and used by National Institute for Cardiovascular Outcomes Research (NICOR).
 
 NCHDA data processing (R code)
+
+which calls the following R files:
+
+05.specific_procedure_algorithm_v8.05
+
+04.activity_analysis_algorithm_v8.03
+
+02.nchda_aa_sp_shared_codes_v8.05
 
 Step 2
 Create linked data, i.e., link the NCHDA dataset to HES and create care spells and derive the hospital resource utilization before age 1-year (study outcome)

@@ -1,0 +1,260 @@
+use "$NCHDAdataset", clear
+* merge patients' characteristics (sex, gender and ethniciy) and hospital resource utilization before age 1-year (study outcome) derived from the linked data
+
+capture drop _m
+merge m:m patid  using "$LinkedData", keepusing((sex MYDOB_rev ethnicity lastknowstatus*  ageatlastknowstatus*pat_excluded* patWales patimd_2019_quintiles AllDaysbyYear1 IPDaysbyYear1 OPDaysbyYear1)  
+
+
+**CHECK ADMISSION STATUS**
+capture drop adminstatus 
+g adminstatus=.
+replace adminstatus=1 if strmatch(_09_PATIENT_ADMIN_STATUS, "*NHS*")
+replace adminstatus=2 if strmatch(_09_PATIENT_ADMIN_STATUS, "*Private*")
+replace adminstatus=3 if strmatch(_09_PATIENT_ADMIN_STATUS, "*Amenity*")
+
+capture label drop adminLabel
+capture noisily {
+label define adminLabel ///
+ 1 "1: NHS" ///
+ 2 "2: Private" ///
+ 3 "3: Amenity" ///
+ 9 "9: Unknown" 
+}
+
+label values adminstatus adminLabel
+tab adminstatus, missing
+
+
+capture drop adminnonNHS
+
+gen adminnonNHS=.
+
+replace adminnonNHS=1 if inlist(adminstatus,2,3)
+replace adminnonNHS=0 if inlist(adminstatus,1)
+
+
+capture drop Privatepat
+by patid, sort: egen Privatepat=max(adminnonNHS)
+replace Privatepat=9 if Privatepat==.
+capture label drop PrivatepatLabel
+capture noisily {
+label define NHSpatLabel ///
+ 0 "0: NHS patients" ///
+ 1 "1: Private/amenity patients" ///
+ 9 "9: Unknown" 
+}
+
+label values Privatepat PrivatepatLabel
+tab Privatepat if patentry==1, missing
+
+
+replace pat_excluded=1 if Privatepat==1
+replace pat_excludedinf=pat_excludedinf+"Private/amenity patients" if Privatepat==1 //also remove non-NHS patients 
+
+
+drop if pat_excluded==1 // remove patients outside england and Wales ; remove patients who had no linakge to  HES inpatient; remove non-NHS patients 
+
+
+********************* outcome: infant mortality
+capture drop death1
+g death1=0
+replace death1=1 if lastknownstatus==1 & ageatlastknownstatus<1
+
+*********************further data process, and assign comorbidity
+
+capture label drop YesNoLabel
+capture noisily {
+label define YesNoLabel ///
+ 0 "0: No" ///
+ 1 "1: Yes" 
+}
+
+replace discharge_date=death_date if death_date<discharge_date & !missing(death_date) & !missing(discharge_date)
+replace procedure_date=discharge_date if procedure_date>discharge_date & !missing(procedure_date) & !missing(discharge_date)
+
+
+capture drop SpecProcCode
+g SpecProcCode=sp_allocation
+tostring SpecProcCode, replace
+
+
+// format of procedure date
+capture drop aux*
+g aux=_01_DATE_OF_VISIT
+capture drop stryy strmm strdd
+g str4 stryy=substr(aux,1,4)
+g str2 strmm=substr(aux,6,7)
+g str2 strdd=substr(aux,9,10)
+replace stryy="" if stryy=="NA"
+replace strmm="" if strmm=="NA"
+replace strdd="" if strdd=="NA"
+destring str*, replace
+capture drop procedure_date
+gen procedure_date = mdy(strmm, strdd, stryy)
+format procedure_date %td
+
+label var procedure_date "Procedure date."
+
+
+// format of dischage date
+
+capture drop aux*
+g aux=dofc(_01_DATE_OF_DISCHARGE)
+format aux %td
+capture drop stryy strmm strdd
+g  stryy=year(aux)
+g  strmm=month(aux)
+g  strdd=day(aux)
+capture drop discharge_date
+gen discharge_date = mdy(strmm, strdd, stryy)
+format discharge_date %td
+
+label var discharge_date "Discharge date."
+
+
+// set patentry
+capture drop patentry
+sort patid procedure_date discharge_date recordID, stable
+by patid (procedure_date discharge_date recordID): gen patentry = _n
+
+
+*** compute event age and discharge age (uncertainty up to 15 days)
+capture drop event_age
+capture drop discharge_age
+
+gen event_age = (procedure_date-MYDOB_rev)/365.25
+gen discharge_age = (discharge_date-MYDOB_rev)/365.25
+
+
+gen ageatop=event_age
+summ event_age if patentry==1, det
+
+
+***Exploration of risk factors/patient characteristics**
+****************************************************************************************************************
+
+*assign comorbidity
+capture drop Cong // congenital comorbidity 
+capture drop Downs //downs 
+capture drop Premat
+
+g Cong=0 
+g Downs=0 
+g Premat=0
+
+foreach x of varlist diagcode* proccode* comorbidity* prevproccode*  {
+***	
+replace Cong=1 if inlist(`x',"030102","030109","030209","030214","030305","030603") 
+replace Cong=1 if inlist(`x',"102304","140101","140103","140104","140105","140121") 
+replace Cong=1 if inlist(`x',"140200","140206","140210","140271","140291","140221") 
+replace Cong=1 if inlist(`x',"140228","140230","140232","140234","140258","140262") 
+replace Cong=1 if inlist(`x',"140266","140300","140304","140306","140307","140308") 
+replace Cong=1 if inlist(`x',"140310","140311","140321","140323","140328","140329") 
+replace Cong=1 if inlist(`x',"140333","140347","140349","140352","140391","140392") 
+replace Cong=1 if inlist(`x',"140409","140412","140485","140490","120540","140550") 
+replace Cong=1 if inlist(`x',"140601","161001","161009") 
+
+*** 
+replace Downs=1 if inlist(`x',"140102") 
+
+
+replace Premat=1 if `x'=="102202" |  `x'=="102205"|  `x'=="102206" 
+
+***
+replace AcqComorb=1 if inlist(`x',"101351","101400","101401","101402","101404","101501") 
+replace AcqComorb=1 if inlist(`x',"101505","101512","102006","102007","102008","102009") 
+replace AcqComorb=1 if inlist(`x',"102012","102013","102017","102018","102037","102038") 
+replace AcqComorb=1 if inlist(`x',"102039","140340","140342","140375","140390","140494") 
+replace AcqComorb=1 if inlist(`x',"140565","158210","160111","160302","160305","160310") 
+replace AcqComorb=1 if inlist(`x',"160800","160900","161300","161320","162010") 
+
+} 
+
+capture drop patpremat
+by patid, sort: egen patpremat=max(Premat)
+label values patpremat YesNoLabel
+label var patpremat "Was the patient premature?"
+tab patpremat if patentry==1 
+
+capture drop patcongcomorb
+by patid, sort: egen patcongcomorb=max(Cong)
+label values patcongcomorb YesNoLabel
+label var patcongcomorb "Does the patient have congenital comorbidity?"
+tab patcongcomorb if patentry==1, missing 
+
+
+capture drop patDowns
+by patid, sort: egen patDowns=max(Downs)
+label values patDowns YesNoLabel
+label var patDowns "Patient has Downs syndrome?"
+tab patDowns if patentry==1, missing 
+
+***procedure type by activity algorithm*** 
+
+tab InterType, missing
+capture drop typebyaa
+g typebyaa=.
+replace typebyaa=1 if inlist(aa_allocation,3) 
+replace typebyaa=2 if inlist(aa_allocation, 1, 2) 
+replace typebyaa=3 if inlist(aa_allocation, 6,7,8,9) 
+replace typebyaa=5 if inlist(aa_allocation,0, 4, 5, 11,12) 
+replace typebyaa=4 if inlist(aa_allocation,10)
+label var typebyaa "type of intervention using aa allocation"
+
+capture label drop typeaaLAb
+capture noisily{
+label define typeaaLAb ///
+1 "1: hybrid" ///
+2 "2: surgery" ///
+3 "3: interventional catheters and ep" ///
+4 "4: diagnostic:non-surgical" ///
+5 "5: no valid codes/vad/ecmo/unallocated"
+}
+label values typebyaa typeaaLAb
+tab typebyaa, missing
+
+
+
+capture drop InterType
+ g InterType=.
+replace InterType=1 if inlist(typebyaa,1,2)
+replace InterType=2 if inlist(typebyaa,3)
+replace InterType=3 if inlist(typebyaa,4,5)
+
+capture label drop InterTypeLab
+capture noisily{
+label define InterTypeLab ///
+1 "1: Surgery and hybrid" ///
+2 "2: Interventional catheters and ep" ///
+3 "3: Excluded" 
+}
+label values InterType InterTypeLab
+
+
+
+
+// era of patients
+capture drop aux*
+
+capture drop pat_era
+g pat_era=.
+replace pat_era=1 if yearofbirth==2018
+replace pat_era=1 if yearofbirth==2019 & monthofbirth<4
+replace pat_era=2 if yearofbirth==2019 & monthofbirth>=4
+replace pat_era=2 if yearofbirth==2020 & monthofbirth<4
+replace pat_era=3 if yearofbirth==2020 & monthofbirth>=4
+replace pat_era=3 if yearofbirth==2021 & monthofbirth<8
+replace pat_era=4 if yearofbirth==2021 & monthofbirth>=8
+replace pat_era=4 if yearofbirth==2022
+
+
+capture label drop pateraLabel
+capture noisily {
+label define pateraLabel ///
+ 1 "1: Pre pandemic era (basline)" ///
+ 2 "2: Pre pandemic era (transition)" ///
+ 3 "3: Pandemic period" ///
+ 4 "4: Pandemic emergence period" 
+}
+label values pat_era pateraLabel
+

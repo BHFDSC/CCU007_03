@@ -7,7 +7,7 @@ Process the primary dataset, i.e., National Congenital Heart Disease Audit (NCHD
 
 NCHDA data processing (R code)
 
-which calls the following R files:
+which calls the following R functions:
 
 05.specific_procedure_algorithm_v8.05
 

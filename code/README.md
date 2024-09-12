@@ -26,6 +26,7 @@ https://github.com/UCL-CORU/CHAMPION-work-stream-2.
 
 Step 4
 Create a final study cohort and  ptient characteristics (exposure, social factors and case mix)
+
 Create the final study cohort with 9 CHDs (R code)
 
 Step 5

@@ -19,7 +19,9 @@ NCHDA further data processing (Stata code)
 Step 3
 Assign the 9 CHDs diagnoses, subgroups, complexity characteristics, treatment pathways  (including study outcome of treatment pathway age) to individual patients using NCHDA data. 
 
-The detailed rules, code list and R code have been shared in CHAMPION project: Congenital Heart Audit: Measuring Progress In Outcomes Nationally
+The detailed rules are shared in the folder "Phenotype".
+
+The corresponding R codes have been shared in CHAMPION project: Congenital Heart Audit: Measuring Progress In Outcomes Nationally
 https://github.com/UCL-CORU/CHAMPION-work-stream-2.
 
 Step 4

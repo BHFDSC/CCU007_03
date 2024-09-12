@@ -3,7 +3,7 @@ This study used  linked electronic health care datasets from England and Wales t
 For inquiries: qi_huang@ucl.ac.uk
 
 Step1
-Process the primary dataset, i.e., National Congenital Heart Disease Audit (NCHDA). We used specific procedure algorithm  and activity algorithm to allocate the procedure type. These two algorithm were developed and used by National Institute for Cardiovascular Outcomes Research (NICOR).
+Process the primary dataset, i.e., National Congenital Heart Disease Audit (NCHDA). We used specific procedure algorithm  and activity algorithm to allocate the procedure type. These two algorithm were developed and used by National Institute for Cardiovascular Outcomes Research (NICOR) https://www.nicor.org.uk/.
 
 NCHDA data processing (R code)
 

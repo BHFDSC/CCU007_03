@@ -134,7 +134,7 @@ source("02.nchda.aa_sp_shared_codes_v8.05.R")
 ###################################################################################################
 ## Activity algorithm (AA) allocation 
 #The algorithm is developed and used by National Institute for Cardiovascular Outcomes Research (NICOR) (version 8.03)
-source("04.activity_analysis_algorithm_v8.03_ QH.R")
+source("activity_analysis_algorithm_v8.03.R")
 db <- db %>%
   mutate(aa_allocation = "") %>%
   mutate(fuvh = "") %>%
@@ -169,7 +169,7 @@ db <- db %>%
 #The algorithm is developed and used by National Institute for Cardiovascular Outcomes Research (NICOR) (version 8.05)
 
 ## run sp allocation processes
-source("05.specific_procedure_algorithm_v8.05_QH.R")
+source("specific_procedure_algorithm_v8.05.R")
 db[1:nrow(db), "sp_allocation"] <- sapply(1:nrow(db), function(i) sp_algorithm(db[i, ]))
 summary(db$sp_allocation)
 

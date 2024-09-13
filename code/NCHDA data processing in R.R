@@ -133,12 +133,11 @@ db <- db %>%
   mutate(comorbidity12 = (strtrim(as.character(gsub("[^Q0-9]", "", comorbid_12)), 6)))
 
 
-source("R codes/02.nchda.aa_sp_shared_codes_v8.05.R")
-
+source("02.nchda.aa_sp_shared_codes_v8.05.R")
 ###################################################################################################
 ## Activity algorithm (AA) allocation 
 #The algorithm is developed and used by National Institute for Cardiovascular Outcomes Research (NICOR) (version 8.03)
-source("R codes/04.activity_analysis_algorithm_v8.03_ QH.R")
+source("04.activity_analysis_algorithm_v8.03_ QH.R")
 db <- db %>%
   mutate(aa_allocation = "") %>%
   mutate(fuvh = "") %>%
@@ -173,7 +172,7 @@ db <- db %>%
 #The algorithm is developed and used by National Institute for Cardiovascular Outcomes Research (NICOR) (version 8.05)
 
 ## run sp allocation processes
-source("R codes/05.specific_procedure_algorithm_v8.05_QH.R")
+source("05.specific_procedure_algorithm_v8.05_QH.R")
 db[1:nrow(db), "sp_allocation"] <- sapply(1:nrow(db), function(i) sp_algorithm(db[i, ]))
 summary(db$sp_allocation)
 

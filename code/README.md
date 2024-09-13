@@ -9,9 +9,9 @@ NCHDA data processing (R code)
 
 which calls the following R functions:
 
-05.specific_procedure_algorithm_v8.05
+specific_procedure_algorithm_v8.05
 
-04.activity_analysis_algorithm_v8.03
+activity_analysis_algorithm_v8.03
 
 02.nchda_aa_sp_shared_codes_v8.05
 

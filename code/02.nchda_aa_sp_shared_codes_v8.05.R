@@ -1,6 +1,5 @@
 ###################################################################################################
 ##  NCHDA AA & SP algorithm
-##  using nchda_and_fetal_codes_v8.1.xlsx
 ###################################################################################################
 ##  2019-08-08 JS (added new 2019-20 codes)
 ##  2020-02-03 added/amended 5 codes (158038, 120612, 128702, 128711, 130524)
@@ -11,8 +10,6 @@
 ## Their leading codes are allocated to 'no_qualifying_code' group which need to be reallocated to catheter intervention, 
 ## bypass, or non-bypass groups. If they have preceding codes in front, the activity category might already be allocated 
 ## to a valid group hierarchically.
-
-
 
 ## 	120195. Balloon atrial septostomy
 ## 	120571. Atrioventricular septal defect (AVSD) repair with direct ventricular component closure & patch to atrial component (Nunn/Wilson)

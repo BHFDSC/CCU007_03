@@ -11,9 +11,7 @@ aa_allocation <- function(nchda_main) {
     ## allocate code list and exclude any invalid procedure codes (intersect - procedures_valid)
     ## remove any valid codes that are ignored (setdiff - procedures_exclude) or minor_excluded
     ## use default dplyr version of setdiff > loaded last
-    code_list <- as.list(nchda_data[i, c("p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p10")])
-    diagnosis_list <- as.list(nchda_data[i, c("d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10")])
-    prev_procedure_list <- as.list(nchda_data[i, c("pp1", "pp2", "pp3", "pp4", "pp5", "pp6", "pp7", "pp8", "pp9", "pp10")])
+    code_list <- as.list(nchda_data[i, c("proccode1", "proccode2", "proccode3", "proccode4", "proccode5", "proccode6", "proccode7", "proccode8")])
 
     ## drop any invalid procedures
     code_list <- intersect(code_list, procedures_valid_nchda)
@@ -33,7 +31,7 @@ aa_allocation <- function(nchda_main) {
     ###############################################################################################
     # Step 0: excluded (no valid codes present)
     if (length(code_list) == 0) {
-      nchda_main[i, "aa_allocation"] <- "no_qualifying_codes"
+      nchda_main[i, "aa_allocation"] <- "0:no_qualifying_codes"
     }
 
 
@@ -224,36 +222,4 @@ ecmo_allocation <- function(nchda_ecmo) {
 }
 
 
-###################################################################################################
-## AA allocation > then primary ecmo allocation
-nchda_data <- aa_allocation(nchda_data)
 
-
-###################################################################################################
-## run and update primary ecmo
-## subgroup of records - 1,2,4,6,7,11 (3 added for 2016-19 analysis)
-nchda_ecmo <- subset(nchda_data, ((type_procedure %in% c(1, 2, 3, 4, 6, 7, 11) & (aa_allocation != "unallocated") & (aa_allocation != "no_valid_codes"))))
-nchda_ecmo <- ecmo_allocation(nchda_ecmo)
-
-
-## update nchda_analysis from nchda_ecmo
-ecmo_records <- nchda_ecmo %>%
-  filter(aa_allocation == "primary_ecmo") %>%
-  select(rowid, primary_ecmo = aa_allocation)
-nchda_data <- nchda_data %>%
-  left_join(ecmo_records, by = c("rowid" = "rowid")) %>%
-  mutate(aa_allocation = replace(aa_allocation, primary_ecmo == "primary_ecmo", "primary_ecmo"))
-
-# The code was added on 1st Sept 2020 to deal with dual consultant operator
-nchda_data <- plyr:::rename(nchda_data, c("X3.04.First.operator.grade" = "operator_grade_1", "X3.06.First.assistant.grade" = "operator_grade_2"))
-
-nchda_data[, "operator_grade_1"] <- strtrim(as.character(gsub("[^Q0-9]", "", nchda_data[, "operator_grade_1"])), 1)
-nchda_data[, "operator_grade_2"] <- strtrim(as.character(gsub("[^Q0-9]", "", nchda_data[, "operator_grade_2"])), 1)
-
-index <- which(nchda_data$operator_grade_1 == 1 & nchda_data$operator_grade_2 == 1)
-
-nchda_data$dual_consultant <- "no"
-nchda_data$dual_consultant[index] <- "yes"
-
-###################################################################################################
-styler:::style_active_file()

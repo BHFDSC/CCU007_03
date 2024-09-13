@@ -30,7 +30,7 @@ db$allprevproc <- db[, "2_02_PREVIOUS_PROCEDURE"]
 ######################################################################################
 ## process procedure  field
 ## number of separated fields for diagnosis, comorbidity, previous procedure and procedure codes
-procedure_fields <- sprintf("procedure_%d", seq(1:10))
+procedure_fields <- sprintf("procedure_%d", seq(1:8))
 
 ## create new fields for the codes
 db <- separate(db, col = allproc, procedure_fields, sep = ";", convert = FALSE, extra = "drop", remove = FALSE)
@@ -44,10 +44,7 @@ db <- db %>%
   mutate(proccode5 = (strtrim(as.character(gsub("[^Q0-9]", "", procedure_5)), 6))) %>%
   mutate(proccode6 = (strtrim(as.character(gsub("[^Q0-9]", "", procedure_6)), 6))) %>%
   mutate(proccode7 = (strtrim(as.character(gsub("[^Q0-9]", "", procedure_7)), 6))) %>%
-  mutate(proccode8 = (strtrim(as.character(gsub("[^Q0-9]", "", procedure_8)), 6))) %>%
-  mutate(proccode9 = (strtrim(as.character(gsub("[^Q0-9]", "", procedure_9)), 6))) %>%
-  mutate(proccode10 = (strtrim(as.character(gsub("[^Q0-9]", "", procedure_10)), 6)))
-
+  mutate(proccode8 = (strtrim(as.character(gsub("[^Q0-9]", "", procedure_8)), 6))) 
 
 ######################################################################################
 ## process diagnosis  field

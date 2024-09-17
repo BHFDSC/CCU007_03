@@ -130,10 +130,10 @@ db <- db %>%
   mutate(comorbidity12 = (strtrim(as.character(gsub("[^Q0-9]", "", comorbid_12)), 6)))
 
 
-source("02.nchda.aa_sp_shared_codes_v8.05.R")
 ###################################################################################################
 ## Activity algorithm (AA) allocation 
 #The algorithm is developed and used by National Institute for Cardiovascular Outcomes Research (NICOR) (version 8.03)
+source("02.nchda.aa_sp_shared_codes_v8.05.R")
 source("activity_analysis_algorithm_v8.03.R")
 db <- db %>%
   mutate(aa_allocation = "") %>%

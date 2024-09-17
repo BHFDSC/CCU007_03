@@ -7,14 +7,6 @@ Process the primary dataset, i.e., National Congenital Heart Disease Audit (NCHD
 
 NCHDA data processing (R code)
 
-which calls the following R functions (written by John Stickley, NICRO):
-
-specific_procedure_algorithm_v8.05
-
-activity_analysis_algorithm_v8.03
-
-02.nchda_aa_sp_shared_codes_v8.05
-
 Step 2
 Create linked data, i.e., link the NCHDA dataset to HES and create care spells and derive the hospital resource utilization before age 1-year (study outcome)
 

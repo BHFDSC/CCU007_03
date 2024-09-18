@@ -1,4 +1,6 @@
-# Peri-pandemic outcomes of infants treated for sentinel congenital heart diseases in English and Wales
+# Peri-pandemic outcomes of infants treated for sentinel congenital heart diseases in England and Wales
+
+**Qi Huang, Deborah A Lawlor, John Nolan, Ferran Espuny-Pujol, Massimo Caputo, Christina Pagel, Sonya Crowe, Rodney CG Franklin, Katherine Brown, on behalf of the CVD-COVID-UK/COVID-IMPACT Consortium**
 
 ## Project description
 

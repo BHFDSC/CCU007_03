@@ -21,7 +21,7 @@ Assign the 9 CHDs diagnoses, subgroups, complexity characteristics, treatment pa
 
 The detailed rules are shared in the folder "Phenotype".
 
-The corresponding R codes and code list in csv have been shared in CHAMPION project: Congenital Heart Audit: Measuring Progress In Outcomes Nationally
+The corresponding R code and code list in CSV format have been shared at the following GitHub link for research on Congenital Heart Disease (CHD) by the UCL Clinical Operational Research Unit (CORU):
 https://github.com/UCL-CORU/CHD-research-code/tree/main/06%20Pathways%20of%20care%20for%20specific%20diagnoses.
 
 Step 4

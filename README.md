@@ -1,13 +1,13 @@
-# Peri-pandemic outcomes of infants treated for sentinel congenital heart diseases in England and Wales
+# Peripandemic outcomes of infants treated for sentinel congenital heart diseases in England and Wales
 
-**Qi Huang, Deborah A Lawlor, John Nolan, Ferran Espuny-Pujol, Massimo Caputo, Christina Pagel, Sonya Crowe, Rodney CG Franklin, Katherine Brown, on behalf of the CVD-COVID-UK/COVID-IMPACT Consortium**
+**Qi Huang, Deborah A Lawlor, John Nolan, Ferran Espuny-Pujol, Massimo Caputo, Christina Pagel, Sonya Crowe, Rodney CG Franklin, Kate L Brown, on behalf of the CVD-COVID-UK/COVID-IMPACT Consortium**
 
 ## Project description
 
 Infants with serious congenital heart disease (CHD) are clinically vulnerable.  Our aims were to explore whether health service changes with the Covid-19 pandemic were associated with poorer outcomes in this population, and whether social characteristics were associated with the study outcomes during pandemic restrictions.
 
 ## How to cite this work
-> Citation details to follow
+Huang Q, Lawlor DA, Nolan J, et al. Peripandemic outcomes of infants treated for sentinel congenital heart diseases in England and Wales. Open Heart 2025;12:e002964. doi:https://doi.org/10.1136/openhrt-2024-002964
 
 ## Contents
 
